@@ -1,0 +1,257 @@
+<div id="page">
+
+<div id="main" class="aui-page-panel">
+
+<div id="main-header">
+
+<div id="breadcrumb-section">
+
+1.  [Tech](index.html)
+2.  [Tech Home](Tech-Home_33041.html)
+3.  [CI/CD](98455.html)
+4.  [Git](Git_366411874.html)
+
+</div>
+
+# <span id="title-text"> Tech : GIT merge, stash </span>
+
+</div>
+
+<div id="content" class="view">
+
+<div class="page-metadata">
+
+Created by <span class="author"> Dongwook Han</span> on 3월 15, 2024
+
+</div>
+
+<div id="main-content" class="wiki-content group">
+
+<style type="text/css">/**/
+div.rbtoc1775379601198 {padding: 0px;}
+div.rbtoc1775379601198 ul {list-style: none;margin-left: 0px;}
+div.rbtoc1775379601198 li {margin-left: 0px;padding-left: 0px;}
+
+/**/</style>
+
+<div class="toc-macro rbtoc1775379601198">
+
+- [Merge와 stash를 사용한 git 작업](#GITmerge,stash-Merge와stash를사용한git작업)
+  - [작업 중인 branch에 최근 반영된 소스 반영하기](#GITmerge,stash-작업중인branch에최근반영된소스반영하기)
+  - [Branch 합치기(merge)](#GITmerge,stash-Branch합치기(merge))
+  - [Brach 합치기 (rebase)](#GITmerge,stash-Brach합치기(rebase))
+  - [Rebase 활용](#GITmerge,stash-Rebase활용)
+  - [Rebase의 위험성](#GITmerge,stash-Rebase의위험성)
+
+</div>
+
+# Merge와 stash를 사용한 git 작업
+
+## 작업 중인 branch에 최근 반영된 소스 반영하기
+
+- develop branch, 작업 중인 feature/test branch 존재
+
+- develop branch에 다른 작업자에 의해 최신 소스가 반영됨
+
+  1.  최신 소스가 반영된 branch checkout
+
+      <div class="code panel pdl" style="border-width: 1px;">
+
+      <div class="codeContent panelContent pdl">
+
+      ``` syntaxhighlighter-pre
+      > git checkout [base branch]
+      > git fetch // base branch 최신화 하기
+      > git pull origin [base branch] // FETCH HEAD에 base branch 명으로 담기
+      ```
+
+      </div>
+
+      </div>
+
+  2.  적용할 branch에 적용
+
+      <div class="code panel pdl" style="border-width: 1px;">
+
+      <div class="codeContent panelContent pdl">
+
+      ``` syntaxhighlighter-pre
+      > git checkout [target branch]
+      > git stash     // 현재 작업한 내용 저장
+      > git reset --hard origin/[base branch]  // base bransh로 덮기 
+      > git stash apply  // stash에 저장된 내용을 머지
+      > git commit -am "stash 내용"  // 머지한 내용 commit
+      ```
+
+      </div>
+
+      </div>
+
+  3.  적용할 대상 branch에 작업 내용 반영
+
+      <div class="code panel pdl" style="border-width: 1px;">
+
+      <div class="codeContent panelContent pdl">
+
+      ``` syntaxhighlighter-pre
+      > git add .
+      > git commit -m "작업내용"
+      > git push
+      ```
+
+      </div>
+
+      </div>
+
+## Branch 합치기(merge)
+
+→ B4 (experiment)
+
+B0 → B1 → B2 → B3 (master)
+
+- merge로 새로운 branch 생성(B3에 B4를 합쳐 B5)
+
+→ B4 (experiment) →
+
+B0 → B1 → B2 → B3 (master) → B5
+
+## Brach 합치기 (rebase)
+
+- B3에서 변경된 사항을 patch로 만들고 이를 B4에 적용(rebase)
+
+- rebase 방법
+
+  1.  git checkout experiment
+
+  2.  git rebase master
+
+→ B4 (experiment) →
+
+B0 → B1 → B2 → B3 (master) → B4' (experiment)
+
+- B2부터 B4(checkout 한 brach)가 가리키는 커밋까지 diff를 차례로 만들어 임시로 저장후, rebase할 branch(experiment)가 합칠 branch(master)가 가리키는 커밋을 가리크게 하고 아까 저장한 변경 사항을 차례대로 적용. 그러고 나서 master branch를 fast-forward 시킴
+
+- Rebase를 보통 remote branch에 커밋을 깔끔하게 적용하고 싶을 때 사용 메인 프로젝트에 patch 보낼 준비가 되면 하는 것이 rebase
+
+## Rebase 활용
+
+C1 → C2 → C5 → C6 (master)
+
+→ C3 → C4 → C10 (server)
+
+→ C8 → C9 (client)
+
+- client branch만 master branch에 합칠 경우 --onto 옵션을 사용하여 명령 실행
+
+  <div class="code panel pdl" style="border-width: 1px;">
+
+  <div class="codeContent panelContent pdl">
+
+  ``` syntaxhighlighter-pre
+  > git rebase --onto master server client
+  ```
+
+  </div>
+
+  </div>
+
+- master branch부터 server branch와 client branch의 공통 조상까지의 커밋을 client branch에서 없애고 싶을 때 사용
+
+C1 - \> C2 → C5 → C6 (master) → C8' → C9' (client)
+
+→ C3 → C4 → C10 (server)
+
+- master branch 에서 client branch를 기반으로 새로 만들어 적용
+
+- master branch에서 fast-forward 시키기
+
+  <div class="code panel pdl" style="border-width: 1px;">
+
+  <div class="codeContent panelContent pdl">
+
+  ``` syntaxhighlighter-pre
+  > git checkout master
+  > git merge client
+  ```
+
+  </div>
+
+  </div>
+
+C1 - \> C2 → C5 → C6 (master) → C8' → C9' (client, master)
+
+→ C3 → C4 → C10 (server)
+
+- server branch를 master branch에 합치기
+
+  - git rebase \<basebranch\> \<topicbran\> 명령으로 checkout 하지 않고 server를 master로 rebase
+
+  - git rebase master server
+
+C1 → C2 → C5 → C6 → C8' → C9' (client, master) → C3' → C4' → C10' (server)
+
+- master branch를 fast-forward
+
+  <div class="code panel pdl" style="border-width: 1px;">
+
+  <div class="codeContent panelContent pdl">
+
+  ``` syntaxhighlighter-pre
+  > git checkout master
+  > git merge server
+  ```
+
+  </div>
+
+  </div>
+
+C1 → C2 → C5 → C6 → C8' → C9' (client, master) → C3' → C4' → C10' (server)
+
+- client, server branch 삭제
+
+  <div class="code panel pdl" style="border-width: 1px;">
+
+  <div class="codeContent panelContent pdl">
+
+  ``` syntaxhighlighter-pre
+  > git branch -d client
+  > git branch -d server
+  ```
+
+  </div>
+
+  </div>
+
+## Rebase의 위험성
+
+- 이미 공개 저장소에 push한 commit를 rebase 하지 말기
+
+- rebase는 기존 commit을 그대로 사용하는 것이 아니라 내용은 같지만 다른 commit을 새로 만듬
+
+- 따라서 이미 remote 등에 commit한 내용을 rebase 하여 사용하면 다른 사용자는 다시 merge를 해야 함
+
+- 결국 local branch에서만 rebase를 사용하라
+
+</div>
+
+</div>
+
+</div>
+
+<div id="footer" role="contentinfo">
+
+<div class="section footer-body">
+
+Document generated by Confluence on 4월 05, 2026 18:00
+
+<div id="footer-logo">
+
+[Atlassian](http://www.atlassian.com/)
+
+</div>
+
+</div>
+
+</div>
+
+</div>
